@@ -64,16 +64,16 @@ The directory structure for single-language documents is as follows:
 
 ## Writing Guidelines
 
-- Use file paths with the `.md` extension
+- Use site routes for links across documentation sections
 
 ```markdown
-[Example](docs/quickstart/example.md)
+[Example](/docs/quickstart/simple-example)
 ```
 
-- Use paths relative to the docs/ directory
+- Use the target document route instead of a repository-relative path
 
 ```markdown
-[Example](docs/quickstart/example.md)
+[Example](/docs/quickstart/simple-example)
 ```
 
 - Image files must be stored in the `static/img` directory and referenced using relative directory paths.

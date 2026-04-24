@@ -47,16 +47,16 @@ Docusaurus 支持国际化，主要需要维护的文档目录结构如下:
 
 ## 文档编写指南
 
-- 使用带有 `.md` 扩展名的文件路径
+- 跨文档分区链接请使用站点路由
 
 ```markdown
-[Example](docs/quickstart/example.md)
+[Example](/docs/quickstart/simple-example)
 ```
 
-- 使用相对于 `docs/` 目录的路径
+- 使用目标文档路由，而不是仓库相对路径
 
 ```markdown
-[Example](docs/quickstart/example.md)
+[Example](/docs/quickstart/simple-example)
 ```
 
 - 图片文件需要存储在 `static/img` 目录，并使用相对目录的形式引用.
