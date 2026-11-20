@@ -497,7 +497,7 @@ ${RELEASE_MANAGER_APACHE_EMAIL}. The key can be found in the KEYS file:
 https://downloads.apache.org/fesod/KEYS
 
 Build environment: JDK 8 or later and the Maven wrapper included in the source package.
-./mvnw clean install
+./mvnw clean package
 
 The vote will remain open for at least 72 hours.
 
