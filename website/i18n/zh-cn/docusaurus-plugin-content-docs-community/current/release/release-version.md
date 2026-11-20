@@ -26,10 +26,10 @@ title: '如何发布版本'
 
 参考以下链接，了解 ASF 版本发布相关指南：
 
-- [Apache Release Guide](http://www.apache.org/dev/release-publishing)
-- [Apache Release Policy](http://www.apache.org/dev/release.html)
-- [Apache Incubator Release](https://incubator.apache.org/guides/releasemanagement.html)
-- [Maven Release Info](http://www.apache.org/dev/publishing-maven-artifacts.html)
+- [Apache 版本创建流程](https://infra.apache.org/release-publishing.html)
+- [Apache 版本发布政策](https://www.apache.org/legal/release-policy.html)
+- [Apache 版本分发政策](https://infra.apache.org/release-distribution)
+- [Maven 制品发布指南](https://infra.apache.org/publishing-maven-artifacts.html)
 
 ### 1.2 PGP签名
 
@@ -196,7 +196,7 @@ dev@fesod.apache.org
 主题：
 
 ```text
-[DISCUSS] Release Apache Fesod(Incubating) ${RELEASE_VERSION}
+[DISCUSS] Release Apache Fesod ${RELEASE_VERSION}
 ```
 
 内容：
@@ -204,10 +204,10 @@ dev@fesod.apache.org
 ```text
 Hi Community,
 
-This is a call for a discussion to release Apache Fesod(Incubating) ${RELEASE_VERSION}.
+This is a call for a discussion to release Apache Fesod ${RELEASE_VERSION}.
 
 The change lists about this release:
-https://github.com/apache/fesod/compare/2.0.0-incubating...2.0.1-incubating-rc1
+https://github.com/apache/fesod/compare/${PREVIOUS_RELEASE_TAG}...${RELEASE_CANDIDATE_TAG}
 
 Please leave your comments here about this release plan. We will bump the version in repo and start the release process after the discussion.
 
@@ -224,13 +224,13 @@ ${RELEASE_MANAGER}
 
 如果您是**第一次**作为发布者或原来的密钥已过期，请将**公钥**追加到 Apache SVN 项目 **release 仓库**的 **KEYS** 文件中。KEYS 文件在单独权威位置（release 目录）维护，以保证一致性，并可在 downloads.apache.org 上用于签名验证：
 
-- Release 仓库：<https://dist.apache.org/repos/dist/release/incubator/fesod>
+- Release 仓库：<https://dist.apache.org/repos/dist/release/fesod>
 
 操作步骤：
 
 ```bash
 # 检出到本地 fesod-release 目录
-svn co https://dist.apache.org/repos/dist/release/incubator/fesod/ fesod-release
+svn co https://dist.apache.org/repos/dist/release/fesod/ fesod-release
 
 # 进入本地目录
 cd fesod-release
@@ -246,7 +246,7 @@ svn ci -m "add gpg key for xxx"
 
 - 请不要直接覆盖仓库中 `KEYS`文件，只能**追加**
 - `KEYS` 文件只在 **release** 目录维护（单一权威来源），**不要**在 dev 目录再保留一份，否则两份内容容易不同步。
-- SVN 仓库需要 PPMC 权限，可由 PPMC 成员协助您上传。
+- SVN 仓库需要 PMC 权限，可由 PMC 成员协助您上传。
 
 ### 3.2 POM 配置
 
@@ -264,7 +264,7 @@ svn ci -m "add gpg key for xxx"
 </parent>
 ```
 
-#### 3.2.1 Maven设置
+#### 3.2.2 Maven 设置
 
 在本地 Apache Maven 配置文件 `settings.xml` 中设置 Apache ID 和 GPG 密钥信息
 
@@ -277,7 +277,7 @@ svn ci -m "add gpg key for xxx"
                 <mavenExecutorId>forked-path</mavenExecutorId>
                 <!-- gpg 密钥的 key-id -->
                 <gpg.keyname>yourKeyName</gpg.keyname>
-                <deploy.url>https://dist.apache.org/repos/dist/dev/incubator/fesod/</deploy.url>
+                <deploy.url>https://dist.apache.org/repos/dist/dev/fesod/</deploy.url>
             </properties>
         </profile>
     </profiles>
@@ -312,31 +312,39 @@ svn ci -m "add gpg key for xxx"
 
 #### 3.3.1 预发布版本
 
-例如要发布 `2.0.0-incubating` 版本，需要进行如下的操作：
+例如要发布 `X.Y.Z` 版本，需要进行如下操作。今后的 TLP 版本不再使用 `-incubating`
+后缀；历史版本仍保留原有名称。
 
-- 创建一个新分支`2.0.0-incubating`作为发布分支
-- 修改 `pom.xml` 中的版本号为 `2.0.0-incubating`
+- 创建一个新分支 `X.Y.Z` 作为发布分支
+- 修改 `pom.xml` 中的版本号为 `X.Y.Z`
 - 在 `pom.xml` 中设置固定的 `project.build.outputTimestamp`，以保证[可复现构建](https://maven.apache.org/guides/mini/guide-reproducible-builds.html)
 - 推送 RC(Release Candidates) 版本标签
 
 ```bash
+export RELEASE_VERSION=X.Y.Z
+export RC_VERSION=rc1
+export BUILD_TIMESTAMP=YYYY-MM-DDTHH:MM:SSZ
+
 # 切换到发布分支
-git checkout -b 2.0.0-incubating
+git checkout -b "${RELEASE_VERSION}"
 
 # 创建 RC1 版本Tag
-git tag -s 2.0.0-incubating-rc1 -m "release: release for 2.0.0-incubating RC1"
+git tag -s "${RELEASE_VERSION}-${RC_VERSION}" \
+  -m "release: release Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
 
 # 推送 Tag 到远程仓库
-git push origin 2.0.0-incubating-rc1
+git push origin "${RELEASE_VERSION}-${RC_VERSION}"
 ```
 
 同时设置固定的构建时间戳：
 
 ```bash
 # 设置固定构建时间戳，保证每次构建产物一致
-mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=2026-09-10T00:00:00Z
+./mvnw versions:set-property \
+  -Dproperty=project.build.outputTimestamp \
+  -DnewVersion="${BUILD_TIMESTAMP}"
 # 或直接在 pom.xml 中设置：
-#   <project.build.outputTimestamp>2026-09-10T00:00:00Z</project.build.outputTimestamp>
+#   <project.build.outputTimestamp>YYYY-MM-DDTHH:MM:SSZ</project.build.outputTimestamp>
 ```
 
 #### 3.3.2 推送二进制包
@@ -344,7 +352,7 @@ mvn versions:set-property -Dproperty=project.build.outputTimestamp -DnewVersion=
 编译预发布RC版本分支源码，并推送二进制包到 [预发仓库](https://repository.apache.org/#stagingRepositories)
 
 ```bash
-mvn clean deploy -Papache-release -Dgpg.skip=false
+./mvnw clean deploy -Papache-release -Dgpg.skip=false
 ```
 
 使用 Apache ID 登录 ASF Nexus 仓库，找到发布的版本并点击 **Close**。
@@ -357,7 +365,7 @@ mvn clean deploy -Papache-release -Dgpg.skip=false
 请勿在日常工作目录中打包！
 :::
 
-> 诸如 `node_modules`、IDE 配置文件（例如 `.idea`、`.vscode`）或重构后残留的空目录等本地文件，可能意外被打包到 `source-release.zip` 中。这将导致合规性问题（例如分发未经授权的二进制文件），并引发投票失败。
+> 诸如 `node_modules`、IDE 配置文件（例如 `.idea`、`.vscode`）或重构后残留的空目录等本地文件，可能意外被打包到源码包中。这将导致合规性问题（例如分发未经授权的二进制文件），并引发投票失败。
 
 您**必须**在**全新克隆的Git仓库**中执行发布流程，以确保构建产物可复现且干净。
 
@@ -367,12 +375,13 @@ mvn clean deploy -Papache-release -Dgpg.skip=false
 
 ```bash
 git archive --format=tar.gz \
-  --prefix=apache-fesod-2.0.0-incubating-src/ \
-  -o apache-fesod-2.0.0-incubating-src.tar.gz \
-  e7546d1138d4d3a638df10193a4c29c50a7e55d8
+  --prefix="apache-fesod-${RELEASE_VERSION}-src/" \
+  -o "apache-fesod-${RELEASE_VERSION}-src.tar.gz" \
+  "${RELEASE_VERSION}-${RC_VERSION}"
 ```
 
-> **注意**：这里的 hash `e7546d1138d4d3a638df10193a4c29c50a7e55d8` 对应 tag `2.0.0-incubating-rc1` 的 commit hash。
+> **注意**：源码包必须由投票所指向的确切签名 Tag 构建。请在投票邮件中记录该 Tag 的
+> commit hash，便于投票人将源码包与对应版本进行比对。
 
 #### 3.3.4 签名
 
@@ -403,22 +412,22 @@ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
 
 ```bash
 # 检出 SVN dev 仓库
-svn co https://dist.apache.org/repos/dist/dev/incubator/fesod/ fesod-dev
+svn co https://dist.apache.org/repos/dist/dev/fesod/ fesod-dev
 cd fesod-dev
 
 # 创建版本目录
-mkdir 2.0.0-incubating-rc1
-cd 2.0.0-incubating-rc1
+mkdir "${RELEASE_VERSION}-${RC_VERSION}"
+cd "${RELEASE_VERSION}-${RC_VERSION}"
 
 # 复制源代码包文件 (假设文件在上一级目录)
-cp ../../apache-fesod-2.0.0-incubating-src.tar.gz .
-cp ../../apache-fesod-2.0.0-incubating-src.tar.gz.asc .
-cp ../../apache-fesod-2.0.0-incubating-src.tar.gz.sha512 .
+cp "../../apache-fesod-${RELEASE_VERSION}-src.tar.gz" .
+cp "../../apache-fesod-${RELEASE_VERSION}-src.tar.gz.asc" .
+cp "../../apache-fesod-${RELEASE_VERSION}-src.tar.gz.sha512" .
 
 # 提交到 SVN
 cd ..
-svn add 2.0.0-incubating-rc1
-svn commit -m "Add 2.0.0-incubating-rc1 source release"
+svn add "${RELEASE_VERSION}-${RC_VERSION}"
+svn commit -m "Add Apache Fesod ${RELEASE_VERSION} ${RC_VERSION} candidate"
 ```
 
 使用 SVN 仓库需要先设置好用户，也可以在每个命令行中指定用户名和密码，例如
@@ -429,9 +438,12 @@ svn co --username <apache-id> --password <password>
 
 如果某些文件是意外出现或者发生某些错误，则需要删除相关内容并执行 `svn delete`，然后重复上述上传过程。
 
-## 4.社区投票
+## 4. PMC 版本发布投票
 
-每个版本可经历多轮次投票，其中 RC N 和 Round N 代表 N 次数，该版本的第几次投票
+版本发布投票在 `dev@fesod.apache.org` 上公开进行。只有 Apache Fesod PMC 成员的投票
+具有约束力，但我们非常欢迎 Committer、贡献者和用户参与审查并投出无约束力票。
+
+每个新候选版本都必须使用新的 RC 编号。不得复用已经投票的 Tag 或预发布目录。
 
 ### 4.1 发起投票
 
@@ -444,7 +456,7 @@ dev@fesod.apache.org
 标题：
 
 ```text
-[VOTE] Release Apache Fesod (Incubating) ${RELEASE_VERSION}-RCN
+[VOTE] Release Apache Fesod ${RELEASE_VERSION} (${RC_VERSION})
 ```
 
 正文：
@@ -452,33 +464,31 @@ dev@fesod.apache.org
 ```text
 Hi Community,
 
-This is a call for vote to release Apache Fesod(Incubating) ${RELEASE_VERSION}.
+This is a call for a vote to release Apache Fesod ${RELEASE_VERSION}.
 
-The release candidates:
-https://dist.apache.org/repos/dist/dev/incubator/fesod/2.0.0-incubating-rc1
+The release candidate:
+https://dist.apache.org/repos/dist/dev/fesod/${RELEASE_VERSION}-${RC_VERSION}/
 
-The staging repo:
-https://repository.apache.org/content/repositories/orgapachefesod-1016
+The staging repository:
+https://repository.apache.org/content/repositories/${STAGING_REPOSITORY}/
 
 Git tag for the release:
-https://github.com/apache/fesod/releases/tag/2.0.0-incubating-rc1
+https://github.com/apache/fesod/tree/${RELEASE_VERSION}-${RC_VERSION}
 
-Hash for the release tag:
-e7546d1138d4d3a638df10193a4c29c50a7e55d8
+Commit hash for the release tag:
+${RELEASE_TAG_COMMIT_HASH}
 
-Release Notes:
-https://github.com/apache/fesod/releases/tag/2.0.0--rc1
+Release notes:
+${RELEASE_NOTES_URL}
 
-The artifacts have been signed with Key [ key-id ], corresponding
-to
-[ xxx@apache.org ]
-which can be found in the keys file:
-https://downloads.apache.org/incubator/fesod/KEYS
+The artifacts have been signed with key ${SIGNING_KEY_ID}, belonging to
+${RELEASE_MANAGER_APACHE_EMAIL}. The key can be found in the KEYS file:
+https://downloads.apache.org/fesod/KEYS
 
-Build Environment: JDK 8+, Apache Maven 3.6.0+.
-./mvnw clean package
+Build environment: JDK 8 or later and the Maven wrapper included in the source package.
+./mvnw clean install
 
-The vote will be open for at least 72 hours.
+The vote will remain open for at least 72 hours.
 
 Please vote accordingly:
 
@@ -486,23 +496,28 @@ Please vote accordingly:
 [ ] +0 no opinion
 [ ] -1 disapprove with the reason
 
+Only Apache Fesod PMC votes are binding. Other votes are welcome and will be recorded as non-binding.
+
 Checklist for reference:
 
 [ ] Download links are valid.
-[ ] Checksums and signatures.
-[ ] LICENSE/NOTICE files exist
-[ ] No unexpected binary files
-[ ] All source files have ASF headers
-[ ] Can compile from source
+[ ] Checksums and signatures are valid.
+[ ] The source archive matches the signed tag.
+[ ] LICENSE and NOTICE files are correct.
+[ ] No unexpected binary files are present.
+[ ] All source files have appropriate license headers.
+[ ] The source package builds and tests pass.
 
-To learn more about Apache Fesod , please see https://fesod.apache.org/
+To learn more about Apache Fesod, please see https://fesod.apache.org/.
 ```
 
-将正文中所需内容更正为实际的`${RELEASE_VERSION}`的`RCN`轮次的内容
+发送邮件前，请将所有占位符替换为本次候选版本的实际值。
 
 ### 4.2 完成投票
 
-**投票持续至少 72 小时并至少获得 3个 +1 的 binding 票** 之后，发布投票结果：
+版本发布投票必须持续至少 72 小时，获得至少 3 张具有约束力的 `+1` 票，且具有约束力的
+`+1` 票数多于 `-1` 票数，方可通过。版本发布投票不能被一张 `-1` 票否决，但所有问题都
+必须以公开、透明的方式调查和解决。
 
 发送至：
 
@@ -513,7 +528,7 @@ dev@fesod.apache.org
 标题：
 
 ```text
-[RESULT][VOTE] Release Apache Fesod (Incubating) ${RELEASE_VERSION}-RCN
+[RESULT][VOTE] Release Apache Fesod ${RELEASE_VERSION} (${RC_VERSION})
 ```
 
 正文：
@@ -521,8 +536,7 @@ dev@fesod.apache.org
 ```text
 Hi Community,
 
-The vote to release Apache Fesod (Incubating) ${RELEASE_VERSION}-RCN-RCN has
-PASSED and closed now.
+The vote to release Apache Fesod ${RELEASE_VERSION} (${RC_VERSION}) has passed.
 
 The result is as follows:
 
@@ -535,160 +549,43 @@ The result is as follows:
 - XXX
 - XXX
 
-no further 0 or -1 votes.
-
-The vote thread:
-https://lists.apache.org/thread/3b8vz8891cjtjblthvnx95l44sh2fmqz
-
-Thank you for reviewing and voting for our release candidate.
-
-We will now bring this vote to the general@incubator mailing list for
-IPMC approval.
-```
-
-如果投票失败，先解决提出的问题，然后按照版本发布流程，准备新一轮`RCN` 的物料和发起新一轮投票。
-
-## 5 孵化器投票
-
-社区投票通过并完成后，需要向孵化器邮件列表发起投票。
-
-### 5.1 发起投票
-
-与社区发起投票类似，但是需要增加社区投票通过相关的邮件链接，以证明已在社区内达成一致。
-
-发送至：
-
-```mail
-general@incubator.apache.org
-```
-
-标题：
-
-```text
-[VOTE] Release Apache Fesod (Incubating) ${RELEASE_VERSION}-RCN
-```
-
-正文：
-
-```text
-Hi all,
-
-This is a call for vote to release Apache Fesod(Incubating) ${RELEASE_VERSION}-RCN.
-
-The Apache Fesod community has voted and approved the release of Apache
-Fesod(Incubating) ${RELEASE_VERSION}. We now kindly request the IPMC members
-review and vote for this release.
-
-Project description: Apache Fesod (Incubating) is a high-performance,
-easy-to-use Java library for processing spreadsheet files.
-
-The vote thread:
-https://lists.apache.org/thread/r6hsbb9tmsqmn9s7q9qptv3z287lkcbf
-
-The vote result thread:
-https://lists.apache.org/thread/r6hsbb9tmsqmn9s7q9qptv3z287lkcbf
-
-The release candidates:
-https://dist.apache.org/repos/dist/dev/incubator/fesod/x.x.x/
-
-The staging repository:
-https://repository.apache.org/content/repositories/${STAGING.RELEASE}/
-
-Git tag for the release:
-https://github.com/apache/fesod/releases/tag/vx.x.x
-
-Hash for the release tag:
-ea6687ff9da3d3389c51a39852d84f3a209708c4
-
-Release Notes:
-https://github.com/apache/fesod/releases/tag/vx.x.x
-
-The artifacts have been signed with Key [ key-id ], corresponding
-to [ xxxx@apache.org ] which can be found in the keys file:
-https://downloads.apache.org/incubator/fesod/KEYS
-
-Build Environment: JDK 8+, Apache Maven 3.6.0+.
-./mvnw clean package
-
-The vote will be open for at least 72 hours.
-
-Please vote accordingly:
-
-[ ] +1 approve
-[ ] +0 no opinion
-[ ] -1 disapprove with the reason
-
-Checklist for reference:
-
-[ ] Download links are valid.
-[ ] Checksums and signatures.
-[ ] LICENSE/NOTICE files exist
-[ ] No unexpected binary files
-[ ] All source files have ASF headers
-[ ] Can compile from source
-
-To learn more about Apache Fesod , please see https://fesod.apache.org/
-```
-
-### 5.2 公示孵化器投票结果
-
-**投票持续至少 72 小时并至少获得 3个 +1 的 binding 票** 之后，发布投票结果：
-
-发送至：
-
-```mail
-general@incubator.apache.org
-```
-
-标题：
-
-```text
-[RESULT][VOTE] Release Apache Fesod (Incubating) ${RELEASE_VERSION}-RCN
-```
-
-正文：
-
-```text
-Hi Incubator PMC,
-
-The vote to release Apache Fesod(Incubating) ${RELEASE_VERSION}-RCN has passed with
-3 +1 binding and 1 +1 non-binding votes, no +0 or -1 votes.
-
-Binding votes：
-
-- XXX
-- XXX
-- XXX
-
-Non-Binding votes:
-
-- XXX
+No +0 or -1 votes were cast.
 
 Vote thread:
-https://lists.apache.org/thread/o7vwdvtolclcv1y4j4ozshj923ppwlnl
+${VOTE_THREAD_URL}
 
-Thanks for reviewing and voting for our release candidate. We will
-proceed with publishing the approved artifacts and sending out the
-announcement soon.
+Thank you for reviewing and voting on this release candidate. I will now publish the approved
+artifacts and send the release announcement.
 ```
 
-# 6.完成发布
+如果投票未通过，请先解决提出的问题，再使用新的 RC 编号准备候选版本并重新发起投票。
+不得覆盖或复用未通过投票的候选版本 Tag 或预发布目录。
 
-## 6.1 迁移源代码和二进制包
+## 5. 完成发布
 
-登录 Apache Nexus 仓库, 选择之前进行 close 过的的 **orgapachefesod-XXX** 点击 `Release` 图标发布
+### 5.1 发布源码包和二进制便利包
 
-1. 将 dev下的签名文件、src、bin移动到release路径下，参考如下命令：
+1. 登录 Apache Nexus 仓库，选择之前已关闭的 **orgapachefesod-XXX** 预发布仓库，点击
+   `Release` 发布 Maven 二进制便利包。
+
+2. 将已通过投票的源码包、签名和校验和从 dev 目录移至 release 目录：
 
    ```bash
-   svn mv https://dist.apache.org/repos/dist/dev/incubator/fesod/x.x.x-RCN https://dist.apache.org/repos/dist/release/incubator/fesod/x.x.x -m "Release X.X.X"
+   svn mv \
+     "https://dist.apache.org/repos/dist/dev/fesod/${RELEASE_VERSION}-${RC_VERSION}" \
+     "https://dist.apache.org/repos/dist/release/fesod/${RELEASE_VERSION}" \
+     -m "Release Apache Fesod ${RELEASE_VERSION}"
    ```
 
-2. 将之前release note设置为Set as the latest release并提交
+3. 发布下载链接或版本公告前，请等待源码包出现在 `downloads.apache.org`，并等待 Maven 制品
+   同步至 Maven Central。
 
-3. 将x.x.x的文档更新至fesod官网中，并补充对应binary和source的下载链接
+4. 使用已通过投票的 RC Tag 创建 GitHub Release，将其标记为最新版本，并发布经审核的版本说明。
 
-## 6.2 版本公示
+5. 在 Fesod 网站中更新 `${RELEASE_VERSION}` 的文档，并补充源码包和二进制便利包下载链接。
+   源码包下载链接必须使用 ASF 镜像重定向服务。
+
+### 5.2 版本公告
 
 发送至：
 
@@ -699,7 +596,7 @@ announce@apache.org,dev@fesod.apache.org
 标题：
 
 ```text
-[ANNOUNCE] Apache Fesod(Incubating) ${RELEASE_VERSION} released
+[ANNOUNCE] Apache Fesod ${RELEASE_VERSION} released
 ```
 
 正文：
@@ -707,26 +604,26 @@ announce@apache.org,dev@fesod.apache.org
 ```text
 Hello everyone,
 
-The Apache Fesod(Incubating) ${RELEASE_VERSION} has been released!
+Apache Fesod ${RELEASE_VERSION} has been released.
 
-Apache Fesod (Incubating) is a high-performance and memory-efficient Java library for reading and writing spreadsheet files, designed to simplify development and ensure reliability.
+Apache Fesod is a high-performance and memory-efficient Java library for reading and writing
+spreadsheet files, designed to simplify development and ensure reliability.
 
-Download Links:
+Download:
 https://fesod.apache.org/docs/download
 
-Release Notes:
-https://github.com/apache/fesod/releases/tag/x.x.x/
+Release notes:
+https://github.com/apache/fesod/releases/tag/${RELEASE_VERSION}
 
 Website:
 https://fesod.apache.org/
 
 Resources:
-- Issue: https://github.com/apache/fesod/issues
+- Issues: https://github.com/apache/fesod/issues
 - Mailing list: dev@fesod.apache.org
 
-We would like to thank all the contributors who made this release possible, and to
-our Incubator mentors for their great guidance.
+We would like to thank everyone who contributed to this release.
 
 ${RELEASE_MANAGER}
-On behalf of Apache Fesod (Incubating) PPMC
+On behalf of the Apache Fesod PMC
 ```
