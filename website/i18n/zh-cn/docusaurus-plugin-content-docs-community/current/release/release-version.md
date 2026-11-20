@@ -516,7 +516,7 @@ Checklist for reference:
 [ ] The source archive matches the signed tag.
 [ ] LICENSE and NOTICE files are correct.
 [ ] No unexpected binary files are present.
-[ ] All source files have appropriate license headers.
+[ ] All source files have ASF headers.
 [ ] The source package builds and tests pass.
 
 To learn more about Apache Fesod, please see https://fesod.apache.org/.

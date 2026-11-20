@@ -207,7 +207,7 @@ find . -name rat.txt -print0 | xargs -0 -I file cat file | grep "Unapproved Lice
 [X] The source archive matches the signed tag.
 [X] LICENSE and NOTICE files are correct.
 [X] No unexpected binary files are present.
-[X] All source files have appropriate license headers.
+[X] All source files have ASF headers.
 [X] The source package builds and tests pass.
 
 My Environment:
