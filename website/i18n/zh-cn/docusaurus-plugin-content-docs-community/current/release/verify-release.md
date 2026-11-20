@@ -131,14 +131,7 @@ cd apache-fesod-${RELEASE_VERSION}-src
 
 ```
 
-### 3.1 TLP 源码包检查
-
-* [ ] 解压后仅包含一个顶层 `apache-fesod-${RELEASE_VERSION}-src` 目录。
-* [ ] 源码包内容与投票邮件中指定的签名 Git Tag 一致。
-* [ ] 根目录包含 `LICENSE` 和 `NOTICE`，且不再包含孵化器 `DISCLAIMER`。
-* [ ] 不包含非预期的生成文件、编译产物或二进制文件。
-
-### 3.2 ASF License Header (RAT 检查)
+### 3.1 ASF License Header (RAT 检查)
 
 使用 Maven 插件进行 License 头检查。
 
@@ -154,8 +147,7 @@ mvn apache-rat:check
 查看生成的报告文件（通常在 `target/rat.txt` 或控制台输出）：
 
 * **Unapproved Licenses:** 必须为 0。
-* **Binaries:** 必须逐项检查。源码包中不应包含编译后的 jar 或 class 文件；只有在明确需要
-  且许可证合规时，才可包含测试夹具类的二进制文件。
+* **Binaries:** 必须为 0（源码包中不应包含编译后的 jar 或 class 文件）。
 
 ```shell
 # 快速查看异常文件 (Mac/Linux)
@@ -163,7 +155,7 @@ find . -name rat.txt -print0 | xargs -0 -I file cat file | grep "Unapproved Lice
 
 ```
 
-### 3.3 源码编译验证
+### 3.2 源码编译验证
 
 仅使用文档列出的前置条件构建并测试源码包。PMC 成员在投出具有约束力的 `+1` 票之前，
 必须在自己控制的硬件上编译并测试候选版本。
@@ -171,22 +163,23 @@ find . -name rat.txt -print0 | xargs -0 -I file cat file | grep "Unapproved Lice
 ```shell
 # 首次编译可能需要下载依赖，耗时视网络而定
 ./mvnw clean install
-./mvnw javadoc:javadoc
 
 ```
 
 **检查项：**
 
 * [ ] 构建和测试成功。
-* [ ] Javadoc 生成成功。
 * [ ] 源码包中**不包含**任何非必要的二进制文件 (如 `.jar`, `.zip`, `.class`)。
 
-### 3.4 许可证合规性检查
+### 3.3 许可证合规性检查
 
 进入解压后的目录，人工检查：
 
 * [ ] **LICENSE 文件：** 存在且内容标准 (Apache License 2.0)。
-* [ ] **NOTICE 文件：** 存在；如果引入了其他必须在 NOTICE 中声明的依赖，需确认已包含。
+* [ ] **NOTICE 文件：**
+* * 存在。
+* * Copyright 年份为当前年份。
+* * 如果引入了其他必须在 NOTICE 中声明的依赖，需确认已包含。
 
 ## 4. 邮件回复示例
 
@@ -204,7 +197,6 @@ find . -name rat.txt -print0 | xargs -0 -I file cat file | grep "Unapproved Lice
 
 [X] Download links are valid.
 [X] Checksums and signatures are valid.
-[X] The source archive matches the signed tag.
 [X] LICENSE and NOTICE files are correct.
 [X] No unexpected binary files are present.
 [X] All source files have ASF headers.

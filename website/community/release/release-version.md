@@ -514,7 +514,6 @@ Checklist for reference:
 
 [ ] Download links are valid.
 [ ] Checksums and signatures are valid.
-[ ] The source archive matches the signed tag.
 [ ] LICENSE and NOTICE files are correct.
 [ ] No unexpected binary files are present.
 [ ] All source files have ASF headers.

@@ -130,14 +130,7 @@ cd apache-fesod-${RELEASE_VERSION}-src
 
 ```
 
-### 3.1 TLP Source-Package Checks
-
-* [ ] The archive expands into one top-level `apache-fesod-${RELEASE_VERSION}-src` directory.
-* [ ] The archive content matches the signed Git tag identified in the vote email.
-* [ ] The root contains `LICENSE` and `NOTICE` and does not contain an Incubator `DISCLAIMER`.
-* [ ] No unexpected generated, compiled, or binary files are present.
-
-### 3.2 ASF License Header Check (RAT)
+### 3.1 ASF License Header Check (RAT)
 
 Run the Apache RAT (Release Audit Tool) check:
 
@@ -152,10 +145,9 @@ mvn apache-rat:check
 **Check the report (`target/rat.txt`):**
 
 * **Unapproved Licenses:** Must be **0**.
-* **Binaries:** Investigate every entry. Source packages should not contain compiled jars or classes;
-  test fixtures are acceptable only when their inclusion is intentional and license-compliant.
+* **Binaries:** Should be **0** (Source packages should not contain compiled jars/classes).
 
-### 3.3 Compilation Verification
+### 3.2 Compilation Verification
 
 Build and test the source package using only its documented prerequisites. PMC members casting a
 binding `+1` must compile and test the candidate on hardware under their control.
@@ -163,22 +155,23 @@ binding `+1` must compile and test the candidate on hardware under their control
 ```shell
 # This may take time depending on network to download dependencies
 ./mvnw clean install
-./mvnw javadoc:javadoc
 
 ```
 
 **Checklist:**
 
 * [ ] Build and tests succeed.
-* [ ] Javadocs are generated successfully.
 * [ ] No unexpected binary files in the source tree.
 
-### 3.4 License and Notice
+### 3.3 License and Notice
 
 Manually check the following files in the root directory:
 
 * [ ] **LICENSE:** Exists and contains the Apache License 2.0.
-* [ ] **NOTICE:** Exists and contains the required attributions for bundled dependencies (if any).
+* [ ] **NOTICE:**
+* * Exists.
+* * Copyright year is current.
+* * Contains required attributions for bundled dependencies (if any).
 
 ## 4. Email Reply Templates
 
@@ -195,7 +188,6 @@ As an **Apache Fesod PMC member**, your vote is **binding**. Please include `(bi
 
 [X] Download links are valid.
 [X] Checksums and signatures are valid.
-[X] The source archive matches the signed tag.
 [X] LICENSE and NOTICE files are correct.
 [X] No unexpected binary files are present.
 [X] All source files have ASF headers.
