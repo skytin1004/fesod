@@ -216,7 +216,8 @@ ${RELEASE_MANAGER}
 ```
 
 - ${RELEASE_VERSION}: Replace with the next version number to be released.
-- ${PREVIOUS_RELEASE_TAG}: Replace with the most recent final release tag.
+- ${PREVIOUS_RELEASE_TAG}: Replace with the most recent final release tag. For the first TLP release,
+  use `2.1.0-incubating`.
 - ${RELEASE_MANAGER}: Typically the release manager for this version.
 
 ## 3. Material Preparation
@@ -247,7 +248,8 @@ Notes:
 
 - Do not directly overwrite the `KEYS` file in the repository. Only **append** to it.
 - The `KEYS` file is maintained only in the **release** directory (single source of truth). Do **not** create a copy in the dev directory, as two copies tend to drift out of sync.
-- SVN repositories require PMC permissions. A PMC member can assist you with the upload.
+- By default, only PMC members can update `dist/release/fesod`. If you are not a PMC member, ask a
+  PMC member to append your public key.
 
 ### 3.2 POM Configuration
 
@@ -278,7 +280,6 @@ Configure your Apache ID and GPG key information in the local Apache Maven confi
                 <mavenExecutorId>forked-path</mavenExecutorId>
                 <!-- gpg key-id -->
                 <gpg.keyname>yourKeyName</gpg.keyname>
-                <deploy.url>https://dist.apache.org/repos/dist/dev/fesod/</deploy.url>
             </properties>
         </profile>
     </profiles>
@@ -317,42 +318,53 @@ For example, to release version `X.Y.Z`, follow these steps. Future TLP releases
 `-incubating` suffix; historical releases keep their original names.
 
 - Create a new branch `X.Y.Z` as the release branch.
-- Update the version number in `pom.xml` to `X.Y.Z`.
+- Update the `revision` property in `pom.xml` to `X.Y.Z`.
 - Set a fixed `project.build.outputTimestamp` in `pom.xml` to ensure [reproducible builds](https://maven.apache.org/guides/mini/guide-reproducible-builds.html).
-- Push the RC (Release Candidate) version tag.
+- Commit and push the release preparation changes.
+- Create the signed RC (Release Candidate) tag from that exact commit, then push the tag.
 
 ```bash
 export RELEASE_VERSION=X.Y.Z
 export RC_VERSION=rc1
 export BUILD_TIMESTAMP=YYYY-MM-DDTHH:MM:SSZ
+export RELEASE_CANDIDATE_TAG="${RELEASE_VERSION}-${RC_VERSION}"
 
-# Switch to the release branch
+# Create and switch to the release branch
 git checkout -b "${RELEASE_VERSION}"
 
-# Create the RC1 version tag
-git tag -s "${RELEASE_VERSION}-${RC_VERSION}" \
-  -m "release: release Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
+# Set the release version
+./mvnw versions:set-property \
+  -Dproperty=revision \
+  -DnewVersion="${RELEASE_VERSION}"
 
-# Push the tag to the remote repository
-git push origin "${RELEASE_VERSION}-${RC_VERSION}"
-```
-
-When the version is updated, also set a fixed build timestamp:
-
-```bash
 # Set a fixed build timestamp so every build produces identical artifacts
 ./mvnw versions:set-property \
   -Dproperty=project.build.outputTimestamp \
   -DnewVersion="${BUILD_TIMESTAMP}"
 # Or edit pom.xml directly:
 #   <project.build.outputTimestamp>YYYY-MM-DDTHH:MM:SSZ</project.build.outputTimestamp>
+
+# Review, commit, and push the release preparation changes
+git diff -- pom.xml
+git add pom.xml
+git commit -m "chore: prepare Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
+git push -u origin "${RELEASE_VERSION}"
+
+# Create the signed RC tag from the committed release preparation
+git tag -s "${RELEASE_CANDIDATE_TAG}" \
+  -m "release: Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
+git push origin "${RELEASE_CANDIDATE_TAG}"
+
+# Record this commit hash for the vote email
+git rev-parse "${RELEASE_CANDIDATE_TAG}^{commit}"
 ```
 
 #### 3.3.2 Push Binary Packages
 
-Compile the source code of the pre-release RC branch and push the binary packages to the [staging repository](https://repository.apache.org/#stagingRepositories).
+Check out the exact RC tag and deploy the Maven convenience binaries to the [staging repository](https://repository.apache.org/#stagingRepositories).
 
 ```bash
+git checkout "${RELEASE_CANDIDATE_TAG}"
 ./mvnw clean deploy -Papache-release -Dgpg.skip=false
 ```
 
@@ -378,7 +390,7 @@ Use `git archive` to ensure the source package is clean (excluding the .git dire
 git archive --format=tar.gz \
   --prefix="apache-fesod-${RELEASE_VERSION}-src/" \
   -o "apache-fesod-${RELEASE_VERSION}-src.tar.gz" \
-  "${RELEASE_VERSION}-${RC_VERSION}"
+  "${RELEASE_CANDIDATE_TAG}"
 ```
 
 > **Note**: Build the source package from the exact signed tag proposed in the vote. Record the tag's
@@ -542,18 +554,19 @@ Hi Community,
 
 The vote to release Apache Fesod ${RELEASE_VERSION} (${RC_VERSION}) has passed.
 
-The result is as follows:
+The vote tally is:
 
-3 binding +1 votes:
-- XXX
-- XXX
-- XXX
+Binding +1 votes: <count>
+- <name>
 
-2 non-binding +1 votes:
-- XXX
-- XXX
+Non-binding +1 votes: <count>
+- <name or none>
 
-No +0 or -1 votes were cast.
++0 votes: <count>
+- <name or none>
+
+-1 votes: <count>
+- <name and reason, or none>
 
 Vote thread:
 ${VOTE_THREAD_URL}
@@ -562,12 +575,32 @@ Thank you for reviewing and voting on this release candidate. I will now publish
 artifacts and send the release announcement.
 ```
 
+Replace every count and voter list with the actual result. Include any `-1` concern and its
+resolution instead of reporting that no objections were raised.
+
 If the vote does not pass, resolve the issues raised, prepare a new candidate with a new RC number,
 and start a new vote. Do not overwrite or reuse the rejected candidate's tag or staging directory.
 
 ## 5. Completing the Release
 
-### 5.1 Publishing Source and Convenience Binary Packages
+### 5.1 Creating the Final Git Tag
+
+After the vote passes, create the final release tag from the exact commit of the approved RC tag.
+Do not rebuild from or tag a different commit.
+
+```bash
+git fetch origin --tags
+git checkout "${RELEASE_VERSION}-${RC_VERSION}"
+
+# Confirm that HEAD is the commit recorded in the vote email
+test "$(git rev-parse HEAD)" = "${RELEASE_TAG_COMMIT_HASH}"
+
+# Create and push the final tag from the approved commit
+git tag -s "${RELEASE_VERSION}" -m "release: Apache Fesod ${RELEASE_VERSION}"
+git push origin "${RELEASE_VERSION}"
+```
+
+### 5.2 Publishing Source and Convenience Binary Packages
 
 1. Log in to the Apache Nexus repository, select the closed **orgapachefesod-XXX** staging repository,
    and click `Release` to publish the Maven convenience binaries.
@@ -585,13 +618,13 @@ and start a new vote. Do not overwrite or reuse the rejected candidate's tag or 
 3. Wait for the release artifacts to appear on `downloads.apache.org` and for the Maven artifacts to
    synchronize to Maven Central before publishing download links or announcing the release.
 
-4. Create the GitHub release from the approved RC tag, mark it as the latest release, and publish the
-   approved release notes.
+4. Create the GitHub release from the final `${RELEASE_VERSION}` tag, mark it as the latest release,
+   and publish the approved release notes. The final tag must point to the approved RC commit.
 
 5. Update the Fesod website for `${RELEASE_VERSION}` and add the source and convenience binary download
    links. The source download must use the ASF mirror redirector.
 
-### 5.2 Release Announcement
+### 5.3 Release Announcement
 
 To:
 

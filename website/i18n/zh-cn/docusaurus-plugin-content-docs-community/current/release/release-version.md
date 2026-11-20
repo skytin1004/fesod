@@ -216,7 +216,8 @@ ${RELEASE_MANAGER}
 ```
 
 - ${RELEASE_VERSION}：替换为下一个要发布的版本号
-- ${PREVIOUS_RELEASE_TAG}：替换为最近一次正式发布的版本 Tag
+- ${PREVIOUS_RELEASE_TAG}：替换为最近一次正式发布的版本 Tag。首次发布 TLP 版本时，使用
+  `2.1.0-incubating`
 - ${RELEASE_MANAGER}：一般为这个版本的版本经理
 
 ## 3 物料准备
@@ -247,7 +248,8 @@ svn ci -m "add gpg key for xxx"
 
 - 请不要直接覆盖仓库中 `KEYS`文件，只能**追加**
 - `KEYS` 文件只在 **release** 目录维护（单一权威来源），**不要**在 dev 目录再保留一份，否则两份内容容易不同步。
-- SVN 仓库需要 PMC 权限，可由 PMC 成员协助您上传。
+- 默认情况下，只有 PMC 成员可以更新 `dist/release/fesod`。如果您不是 PMC 成员，请联系
+  PMC 成员协助追加公钥。
 
 ### 3.2 POM 配置
 
@@ -278,7 +280,6 @@ svn ci -m "add gpg key for xxx"
                 <mavenExecutorId>forked-path</mavenExecutorId>
                 <!-- gpg 密钥的 key-id -->
                 <gpg.keyname>yourKeyName</gpg.keyname>
-                <deploy.url>https://dist.apache.org/repos/dist/dev/fesod/</deploy.url>
             </properties>
         </profile>
     </profiles>
@@ -317,42 +318,53 @@ svn ci -m "add gpg key for xxx"
 后缀；历史版本仍保留原有名称。
 
 - 创建一个新分支 `X.Y.Z` 作为发布分支
-- 修改 `pom.xml` 中的版本号为 `X.Y.Z`
+- 将 `pom.xml` 中的 `revision` 属性修改为 `X.Y.Z`
 - 在 `pom.xml` 中设置固定的 `project.build.outputTimestamp`，以保证[可复现构建](https://maven.apache.org/guides/mini/guide-reproducible-builds.html)
-- 推送 RC(Release Candidates) 版本标签
+- 提交并推送发布准备相关的更改
+- 从该提交创建签名 RC（Release Candidate）Tag，然后推送该 Tag
 
 ```bash
 export RELEASE_VERSION=X.Y.Z
 export RC_VERSION=rc1
 export BUILD_TIMESTAMP=YYYY-MM-DDTHH:MM:SSZ
+export RELEASE_CANDIDATE_TAG="${RELEASE_VERSION}-${RC_VERSION}"
 
-# 切换到发布分支
+# 创建并切换到发布分支
 git checkout -b "${RELEASE_VERSION}"
 
-# 创建 RC1 版本Tag
-git tag -s "${RELEASE_VERSION}-${RC_VERSION}" \
-  -m "release: release Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
+# 设置发布版本
+./mvnw versions:set-property \
+  -Dproperty=revision \
+  -DnewVersion="${RELEASE_VERSION}"
 
-# 推送 Tag 到远程仓库
-git push origin "${RELEASE_VERSION}-${RC_VERSION}"
-```
-
-同时设置固定的构建时间戳：
-
-```bash
 # 设置固定构建时间戳，保证每次构建产物一致
 ./mvnw versions:set-property \
   -Dproperty=project.build.outputTimestamp \
   -DnewVersion="${BUILD_TIMESTAMP}"
 # 或直接在 pom.xml 中设置：
 #   <project.build.outputTimestamp>YYYY-MM-DDTHH:MM:SSZ</project.build.outputTimestamp>
+
+# 检查、提交并推送发布准备相关的更改
+git diff -- pom.xml
+git add pom.xml
+git commit -m "chore: prepare Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
+git push -u origin "${RELEASE_VERSION}"
+
+# 从已提交的发布准备内容创建签名 RC Tag
+git tag -s "${RELEASE_CANDIDATE_TAG}" \
+  -m "release: Apache Fesod ${RELEASE_VERSION} ${RC_VERSION}"
+git push origin "${RELEASE_CANDIDATE_TAG}"
+
+# 记录该提交哈希，供投票邮件使用
+git rev-parse "${RELEASE_CANDIDATE_TAG}^{commit}"
 ```
 
 #### 3.3.2 推送二进制包
 
-编译预发布RC版本分支源码，并推送二进制包到 [预发仓库](https://repository.apache.org/#stagingRepositories)
+检出确切的 RC Tag，并将 Maven 二进制便利包部署到[预发仓库](https://repository.apache.org/#stagingRepositories)
 
 ```bash
+git checkout "${RELEASE_CANDIDATE_TAG}"
 ./mvnw clean deploy -Papache-release -Dgpg.skip=false
 ```
 
@@ -378,7 +390,7 @@ git push origin "${RELEASE_VERSION}-${RC_VERSION}"
 git archive --format=tar.gz \
   --prefix="apache-fesod-${RELEASE_VERSION}-src/" \
   -o "apache-fesod-${RELEASE_VERSION}-src.tar.gz" \
-  "${RELEASE_VERSION}-${RC_VERSION}"
+  "${RELEASE_CANDIDATE_TAG}"
 ```
 
 > **注意**：源码包必须由投票所指向的确切签名 Tag 构建。请在投票邮件中记录该 Tag 的
@@ -539,18 +551,19 @@ Hi Community,
 
 The vote to release Apache Fesod ${RELEASE_VERSION} (${RC_VERSION}) has passed.
 
-The result is as follows:
+The vote tally is:
 
-3 binding +1 Votes:
-- XXX
-- XXX
-- XXX
+Binding +1 votes: <count>
+- <name>
 
-2 non-binding +1 Votes:
-- XXX
-- XXX
+Non-binding +1 votes: <count>
+- <name or none>
 
-No +0 or -1 votes were cast.
++0 votes: <count>
+- <name or none>
+
+-1 votes: <count>
+- <name and reason, or none>
 
 Vote thread:
 ${VOTE_THREAD_URL}
@@ -559,12 +572,32 @@ Thank you for reviewing and voting on this release candidate. I will now publish
 artifacts and send the release announcement.
 ```
 
+请将所有票数和投票人列表替换为实际结果。如果存在 `-1` 票，请说明相关问题及其解决情况，
+不要写成没有反对意见。
+
 如果投票未通过，请先解决提出的问题，再使用新的 RC 编号准备候选版本并重新发起投票。
 不得覆盖或复用未通过投票的候选版本 Tag 或预发布目录。
 
 ## 5. 完成发布
 
-### 5.1 发布源码包和二进制便利包
+### 5.1 创建最终 Git Tag
+
+投票通过后，从已获批准的 RC Tag 所对应的同一提交创建最终发布 Tag。不得重新构建或为其他
+提交创建 Tag。
+
+```bash
+git fetch origin --tags
+git checkout "${RELEASE_VERSION}-${RC_VERSION}"
+
+# 确认 HEAD 与投票邮件中记录的提交一致
+test "$(git rev-parse HEAD)" = "${RELEASE_TAG_COMMIT_HASH}"
+
+# 从已批准的提交创建并推送最终 Tag
+git tag -s "${RELEASE_VERSION}" -m "release: Apache Fesod ${RELEASE_VERSION}"
+git push origin "${RELEASE_VERSION}"
+```
+
+### 5.2 发布源码包和二进制便利包
 
 1. 登录 Apache Nexus 仓库，选择之前已关闭的 **orgapachefesod-XXX** 预发布仓库，点击
    `Release` 发布 Maven 二进制便利包。
@@ -581,12 +614,13 @@ artifacts and send the release announcement.
 3. 发布下载链接或版本公告前，请等待源码包出现在 `downloads.apache.org`，并等待 Maven 制品
    同步至 Maven Central。
 
-4. 使用已通过投票的 RC Tag 创建 GitHub Release，将其标记为最新版本，并发布经审核的版本说明。
+4. 使用最终 `${RELEASE_VERSION}` Tag 创建 GitHub Release，将其标记为最新版本，并发布经审核的
+   版本说明。最终 Tag 必须指向已批准的 RC 提交。
 
 5. 在 Fesod 网站中更新 `${RELEASE_VERSION}` 的文档，并补充源码包和二进制便利包下载链接。
    源码包下载链接必须使用 ASF 镜像重定向服务。
 
-### 5.2 版本公告
+### 5.3 版本公告
 
 发送至：
 
