@@ -20,8 +20,8 @@ title: '如何验证版本'
 - limitations under the License.
 -->
 
-本检查清单所依据的 ASF 要求，请参阅 [Apache 版本发布政策](https://www.apache.org/legal/release-policy.html)
-和 [版本创建流程](https://infra.apache.org/release-publishing.html)。
+本检查清单所依据的 ASF 要求，请参阅 [Apache Release Policy](https://www.apache.org/legal/release-policy.html)
+和 [Release Creation Process](https://infra.apache.org/release-publishing.html)。
 
 ## 1. 下载要发布的候选版本
 
