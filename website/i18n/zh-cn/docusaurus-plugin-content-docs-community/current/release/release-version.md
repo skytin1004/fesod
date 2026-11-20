@@ -26,10 +26,10 @@ title: '如何发布版本'
 
 参考以下链接，了解 ASF 版本发布相关指南：
 
-- [Apache 版本创建流程](https://infra.apache.org/release-publishing.html)
-- [Apache 版本发布政策](https://www.apache.org/legal/release-policy.html)
-- [Apache 版本分发政策](https://infra.apache.org/release-distribution)
-- [Maven 制品发布指南](https://infra.apache.org/publishing-maven-artifacts.html)
+- [Apache Release Creation Process](https://infra.apache.org/release-publishing.html)
+- [Apache Release Policy](https://www.apache.org/legal/release-policy.html)
+- [Apache Release Distribution Policy](https://infra.apache.org/release-distribution)
+- [Publishing Maven Artifacts](https://infra.apache.org/publishing-maven-artifacts.html)
 
 ### 1.2 PGP签名
 
