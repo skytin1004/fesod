@@ -147,7 +147,7 @@ mvn apache-rat:check
 查看生成的报告文件（通常在 `target/rat.txt` 或控制台输出）：
 
 * **Unapproved Licenses:** 必须为 0。
-* **Binaries:** 必须为 0（源码包中不应包含编译后的 jar 或 class 文件）。
+* **Binaries:** 应当为 0 (源码包中不应包含编译后的二进制 jar/class 文件)。
 
 ```shell
 # 快速查看异常文件 (Mac/Linux)
@@ -177,8 +177,8 @@ find . -name rat.txt -print0 | xargs -0 -I file cat file | grep "Unapproved Lice
 
 * [ ] **LICENSE 文件：** 存在且内容标准 (Apache License 2.0)。
 * [ ] **NOTICE 文件：**
-* * 存在。
-* * Copyright 年份为当前年份。
+* * 存在
+* * 年份正确。
 * * 如果引入了其他必须在 NOTICE 中声明的依赖，需确认已包含。
 
 ## 4. 邮件回复示例

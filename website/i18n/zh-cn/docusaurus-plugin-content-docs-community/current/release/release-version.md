@@ -26,10 +26,10 @@ title: '如何发布版本'
 
 参考以下链接，了解 ASF 版本发布相关指南：
 
-- [Apache Release Creation Process](https://infra.apache.org/release-publishing.html)
+- [Apache Release Guide](https://infra.apache.org/release-publishing.html)
 - [Apache Release Policy](https://www.apache.org/legal/release-policy.html)
 - [Apache Release Distribution Policy](https://infra.apache.org/release-distribution)
-- [Publishing Maven Artifacts](https://infra.apache.org/publishing-maven-artifacts.html)
+- [Maven Release Info](https://infra.apache.org/publishing-maven-artifacts.html)
 
 ### 1.2 PGP签名
 
@@ -480,7 +480,7 @@ This is a call for a vote to release Apache Fesod ${RELEASE_VERSION}.
 The release candidate:
 https://dist.apache.org/repos/dist/dev/fesod/${RELEASE_VERSION}-${RC_VERSION}/
 
-The staging repository:
+The staging repo:
 https://repository.apache.org/content/repositories/${STAGING_REPOSITORY}/
 
 Git tag for the release:
@@ -489,7 +489,7 @@ https://github.com/apache/fesod/tree/${RELEASE_VERSION}-${RC_VERSION}
 Commit hash for the release tag:
 ${RELEASE_TAG_COMMIT_HASH}
 
-Release notes:
+Release Notes:
 ${RELEASE_NOTES_URL}
 
 The artifacts have been signed with key ${SIGNING_KEY_ID}, belonging to
@@ -499,7 +499,7 @@ https://downloads.apache.org/fesod/KEYS
 Build environment: JDK 8 or later and the Maven wrapper included in the source package.
 ./mvnw clean package
 
-The vote will remain open for at least 72 hours.
+The vote will be open for at least 72 hours.
 
 Please vote accordingly:
 
@@ -525,9 +525,8 @@ To learn more about Apache Fesod, please see https://fesod.apache.org/.
 
 ### 4.2 完成投票
 
-版本发布投票必须持续至少 72 小时，获得至少 3 张具有约束力的 `+1` 票，且具有约束力的
-`+1` 票数多于 `-1` 票数，方可通过。版本发布投票不能被一张 `-1` 票否决，但所有问题都
-必须以公开、透明的方式调查和解决。
+版本发布投票应持续至少 72 小时。获得至少 3 张具有约束力的 `+1` 票，且具有约束力的
+`+1` 票数多于 `-1` 票数，投票即通过。版本发布投票不适用一票否决。
 
 发送至：
 
@@ -565,12 +564,12 @@ Non-binding +1 votes: <count>
 Vote thread:
 ${VOTE_THREAD_URL}
 
-Thank you for reviewing and voting on this release candidate. I will now publish the approved
-artifacts and send the release announcement.
+Thank you for reviewing and voting for our release candidate.
+
+I will now publish the approved artifacts and send the release announcement.
 ```
 
-请将所有票数和投票人列表替换为实际结果。如果存在 `-1` 票，请说明相关问题及其解决情况，
-不要写成没有反对意见。
+请将所有票数和投票人列表替换为实际结果。如果存在 `-1` 票，请记录投票人说明的理由。
 
 如果投票未通过，请先解决提出的问题，再使用新的 RC 编号准备候选版本并重新发起投票。
 不得覆盖或复用未通过投票的候选版本 Tag 或预发布目录。
@@ -580,18 +579,18 @@ artifacts and send the release announcement.
 ### 5.1 创建最终 Git Tag
 
 投票通过后，从已获批准的 RC Tag 所对应的同一提交创建最终发布 Tag。不得重新构建或为其他
-提交创建 Tag。
+提交创建 Tag。运行以下命令前，请将 `RELEASE_TAG_COMMIT_HASH` 设置为投票邮件中记录的提交哈希。
 
 ```bash
-git fetch origin --tags
-git checkout "${RELEASE_VERSION}-${RC_VERSION}"
-
-# 确认 HEAD 与投票邮件中记录的提交一致
-test "$(git rev-parse HEAD)" = "${RELEASE_TAG_COMMIT_HASH}"
-
-# 从已批准的提交创建并推送最终 Tag
-git tag -s "${RELEASE_VERSION}" -m "release: Apache Fesod ${RELEASE_VERSION}"
-git push origin "${RELEASE_VERSION}"
+if git fetch origin --tags &&
+   rc_commit="$(git rev-parse --verify "refs/tags/${RELEASE_VERSION}-${RC_VERSION}^{commit}")" &&
+   test "$rc_commit" = "${RELEASE_TAG_COMMIT_HASH:-}"; then
+  git tag -s "${RELEASE_VERSION}" -m "release: Apache Fesod ${RELEASE_VERSION}" "$rc_commit" &&
+    git push origin "refs/tags/${RELEASE_VERSION}"
+else
+  printf '%s\n' '无法确认 RC Tag 与投票邮件中记录的提交哈希一致。' >&2
+  false
+fi
 ```
 
 ### 5.2 发布源码包和二进制便利包
@@ -636,25 +635,24 @@ announce@apache.org,dev@fesod.apache.org
 ```text
 Hello everyone,
 
-Apache Fesod ${RELEASE_VERSION} has been released.
+The Apache Fesod ${RELEASE_VERSION} has been released!
 
-Apache Fesod is a high-performance and memory-efficient Java library for reading and writing
-spreadsheet files, designed to simplify development and ensure reliability.
+Apache Fesod is a high-performance and memory-efficient Java library for reading and writing spreadsheet files, designed to simplify development and ensure reliability.
 
-Download:
+Download Links:
 https://fesod.apache.org/docs/download
 
-Release notes:
+Release Notes:
 https://github.com/apache/fesod/releases/tag/${RELEASE_VERSION}
 
 Website:
 https://fesod.apache.org/
 
 Resources:
-- Issues: https://github.com/apache/fesod/issues
+- Issue: https://github.com/apache/fesod/issues
 - Mailing list: dev@fesod.apache.org
 
-We would like to thank everyone who contributed to this release.
+We would like to thank all the contributors who made this release possible.
 
 ${RELEASE_MANAGER}
 On behalf of the Apache Fesod PMC

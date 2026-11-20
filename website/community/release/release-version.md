@@ -26,10 +26,10 @@ title: 'How to Release'
 
 Refer to the following links to learn about ASF release guidelines:
 
-- [Apache Release Creation Process](https://infra.apache.org/release-publishing.html)
+- [Apache Release Guide](https://infra.apache.org/release-publishing.html)
 - [Apache Release Policy](https://www.apache.org/legal/release-policy.html)
 - [Apache Release Distribution Policy](https://infra.apache.org/release-distribution)
-- [Publishing Maven Artifacts](https://infra.apache.org/publishing-maven-artifacts.html)
+- [Maven Release Info](https://infra.apache.org/publishing-maven-artifacts.html)
 
 ### 1.2 PGP Signature
 
@@ -481,7 +481,7 @@ This is a call for a vote to release Apache Fesod ${RELEASE_VERSION}.
 The release candidate:
 https://dist.apache.org/repos/dist/dev/fesod/${RELEASE_VERSION}-${RC_VERSION}/
 
-The staging repository:
+The staging repo:
 https://repository.apache.org/content/repositories/${STAGING_REPOSITORY}/
 
 Git tag for the release:
@@ -490,7 +490,7 @@ https://github.com/apache/fesod/tree/${RELEASE_VERSION}-${RC_VERSION}
 Commit hash for the release tag:
 ${RELEASE_TAG_COMMIT_HASH}
 
-Release notes:
+Release Notes:
 ${RELEASE_NOTES_URL}
 
 The artifacts have been signed with key ${SIGNING_KEY_ID}, belonging to
@@ -500,7 +500,7 @@ https://downloads.apache.org/fesod/KEYS
 Build environment: JDK 8 or later and the Maven wrapper included in the source package.
 ./mvnw clean package
 
-The vote will remain open for at least 72 hours.
+The vote will be open for at least 72 hours.
 
 Please vote accordingly:
 
@@ -526,9 +526,8 @@ Replace all placeholders with the values for the candidate before sending the em
 
 ### 4.2 Closing the Vote
 
-A release vote passes when it has remained open for at least 72 hours, has at least three binding
-`+1` votes, and has more binding `+1` than binding `-1` votes. Release votes cannot be vetoed by a
-single `-1`, but every concern must be investigated and resolved transparently.
+Release votes should be open for at least 72 hours. A release vote passes with at least three
+binding `+1` votes and more binding `+1` votes than binding `-1` votes. Releases cannot be vetoed.
 
 Announce the result on the same mailing list:
 
@@ -568,12 +567,12 @@ Non-binding +1 votes: <count>
 Vote thread:
 ${VOTE_THREAD_URL}
 
-Thank you for reviewing and voting on this release candidate. I will now publish the approved
-artifacts and send the release announcement.
+Thank you for reviewing and voting for our release candidate.
+
+I will now publish the approved artifacts and send the release announcement.
 ```
 
-Replace every count and voter list with the actual result. Include any `-1` concern and its
-resolution instead of reporting that no objections were raised.
+Replace every count and voter list with the actual result. Include the reasons given for any `-1` votes.
 
 If the vote does not pass, resolve the issues raised, prepare a new candidate with a new RC number,
 and start a new vote. Do not overwrite or reuse the rejected candidate's tag or staging directory.
@@ -583,18 +582,19 @@ and start a new vote. Do not overwrite or reuse the rejected candidate's tag or 
 ### 5.1 Creating the Final Git Tag
 
 After the vote passes, create the final release tag from the exact commit of the approved RC tag.
-Do not rebuild from or tag a different commit.
+Do not rebuild from or tag a different commit. Set `RELEASE_TAG_COMMIT_HASH` to the commit hash
+recorded in the vote email before running the commands below.
 
 ```bash
-git fetch origin --tags
-git checkout "${RELEASE_VERSION}-${RC_VERSION}"
-
-# Confirm that HEAD is the commit recorded in the vote email
-test "$(git rev-parse HEAD)" = "${RELEASE_TAG_COMMIT_HASH}"
-
-# Create and push the final tag from the approved commit
-git tag -s "${RELEASE_VERSION}" -m "release: Apache Fesod ${RELEASE_VERSION}"
-git push origin "${RELEASE_VERSION}"
+if git fetch origin --tags &&
+   rc_commit="$(git rev-parse --verify "refs/tags/${RELEASE_VERSION}-${RC_VERSION}^{commit}")" &&
+   test "$rc_commit" = "${RELEASE_TAG_COMMIT_HASH:-}"; then
+  git tag -s "${RELEASE_VERSION}" -m "release: Apache Fesod ${RELEASE_VERSION}" "$rc_commit" &&
+    git push origin "refs/tags/${RELEASE_VERSION}"
+else
+  printf '%s\n' 'Could not verify the RC tag against the commit hash from the vote email.' >&2
+  false
+fi
 ```
 
 ### 5.2 Publishing Source and Convenience Binary Packages
@@ -640,25 +640,24 @@ Body:
 ```text
 Hello everyone,
 
-Apache Fesod ${RELEASE_VERSION} has been released.
+The Apache Fesod ${RELEASE_VERSION} has been released!
 
-Apache Fesod is a high-performance and memory-efficient Java library for reading and writing
-spreadsheet files, designed to simplify development and ensure reliability.
+Apache Fesod is a high-performance and memory-efficient Java library for reading and writing spreadsheet files, designed to simplify development and ensure reliability.
 
-Download:
+Download Links:
 https://fesod.apache.org/docs/download
 
-Release notes:
+Release Notes:
 https://github.com/apache/fesod/releases/tag/${RELEASE_VERSION}
 
 Website:
 https://fesod.apache.org/
 
 Resources:
-- Issues: https://github.com/apache/fesod/issues
+- Issue: https://github.com/apache/fesod/issues
 - Mailing list: dev@fesod.apache.org
 
-We would like to thank everyone who contributed to this release.
+We would like to thank all the contributors who made this release possible.
 
 ${RELEASE_MANAGER}
 On behalf of the Apache Fesod PMC
