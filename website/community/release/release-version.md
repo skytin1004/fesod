@@ -206,8 +206,8 @@ Hi Community,
 
 This is a call for a discussion to release Apache Fesod ${RELEASE_VERSION}.
 
-The change lists about this release:
-https://github.com/apache/fesod/compare/${PREVIOUS_RELEASE_TAG}...${RELEASE_CANDIDATE_TAG}
+Changes since Apache Fesod ${PREVIOUS_RELEASE_TAG}:
+https://github.com/apache/fesod/compare/${PREVIOUS_RELEASE_TAG}...main
 
 Please leave your comments here about this release plan. We will bump the version in repo and start the release process after the discussion.
 
@@ -216,6 +216,7 @@ ${RELEASE_MANAGER}
 ```
 
 - ${RELEASE_VERSION}: Replace with the next version number to be released.
+- ${PREVIOUS_RELEASE_TAG}: Replace with the most recent final release tag.
 - ${RELEASE_MANAGER}: Typically the release manager for this version.
 
 ## 3. Material Preparation

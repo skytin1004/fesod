@@ -206,8 +206,8 @@ Hi Community,
 
 This is a call for a discussion to release Apache Fesod ${RELEASE_VERSION}.
 
-The change lists about this release:
-https://github.com/apache/fesod/compare/${PREVIOUS_RELEASE_TAG}...${RELEASE_CANDIDATE_TAG}
+Changes since Apache Fesod ${PREVIOUS_RELEASE_TAG}:
+https://github.com/apache/fesod/compare/${PREVIOUS_RELEASE_TAG}...main
 
 Please leave your comments here about this release plan. We will bump the version in repo and start the release process after the discussion.
 
@@ -216,6 +216,7 @@ ${RELEASE_MANAGER}
 ```
 
 - ${RELEASE_VERSION}：替换为下一个要发布的版本号
+- ${PREVIOUS_RELEASE_TAG}：替换为最近一次正式发布的版本 Tag
 - ${RELEASE_MANAGER}：一般为这个版本的版本经理
 
 ## 3 物料准备
