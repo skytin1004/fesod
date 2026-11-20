@@ -216,8 +216,7 @@ ${RELEASE_MANAGER}
 ```
 
 - ${RELEASE_VERSION}: Replace with the next version number to be released.
-- ${PREVIOUS_RELEASE_TAG}: Replace with the most recent final release tag. For the first TLP release,
-  use `2.1.0-incubating`.
+- ${PREVIOUS_RELEASE_TAG}: Replace with the most recent final release tag.
 - ${RELEASE_MANAGER}: Typically the release manager for this version.
 
 ## 3. Material Preparation
@@ -314,8 +313,7 @@ Encryption of the configuration is recommended. Refer to the following guides:
 
 #### 3.3.1 Pre-Release Version
 
-For example, to release version `X.Y.Z`, follow these steps. Future TLP releases do not use the
-`-incubating` suffix; historical releases keep their original names.
+For example, to release version `X.Y.Z`, follow these steps.
 
 - Create a new branch `X.Y.Z` as the release branch.
 - Update the `revision` property in `pom.xml` to `X.Y.Z`.

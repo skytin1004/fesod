@@ -216,8 +216,7 @@ ${RELEASE_MANAGER}
 ```
 
 - ${RELEASE_VERSION}：替换为下一个要发布的版本号
-- ${PREVIOUS_RELEASE_TAG}：替换为最近一次正式发布的版本 Tag。首次发布 TLP 版本时，使用
-  `2.1.0-incubating`
+- ${PREVIOUS_RELEASE_TAG}：替换为最近一次正式发布的版本 Tag
 - ${RELEASE_MANAGER}：一般为这个版本的版本经理
 
 ## 3 物料准备
@@ -314,8 +313,7 @@ svn ci -m "add gpg key for xxx"
 
 #### 3.3.1 预发布版本
 
-例如要发布 `X.Y.Z` 版本，需要进行如下操作。今后的 TLP 版本不再使用 `-incubating`
-后缀；历史版本仍保留原有名称。
+例如要发布 `X.Y.Z` 版本，需要进行如下操作。
 
 - 创建一个新分支 `X.Y.Z` 作为发布分支
 - 将 `pom.xml` 中的 `revision` 属性修改为 `X.Y.Z`
